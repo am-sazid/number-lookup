@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TorNumber - AI Number Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="bg-gradient-to-br from-purple-600 to-pink-600 min-h-screen">
+    <!-- Navbar -->
+    <nav class="bg-white/90 backdrop-blur-md shadow-lg fixed w-full z-50">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-shield-alt text-white"></i>
+                    </div>
+                    <span class="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                        TorNumber
+                    </span>
+                </div>
+                <button id="darkModeBtn" class="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-32 pb-12">
+        <div class="container mx-auto px-6">
+            <!-- Hero Section -->
+            <div class="text-center mb-12">
+                <h1 class="text-5xl md:text-7xl font-bold text-white mb-4">
+                    Know the Number<br>
+                    <span class="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
+                        Before You Trust It
+                    </span>
+                </h1>
+                <p class="text-xl text-white/80 max-w-2xl mx-auto">
+                    AI-powered phone number intelligence with real-time analysis
+                </p>
+            </div>
+
+            <!-- Search Box -->
+            <div class="max-w-2xl mx-auto mb-12">
+                <div class="bg-white/10 backdrop-blur-md rounded-2xl p-2">
+                    <div class="flex flex-col md:flex-row gap-2">
+                        <input type="tel" 
+                               id="phoneInput"
+                               placeholder="Enter phone number (e.g., +14155552671)" 
+                               class="flex-1 px-6 py-4 bg-white/20 rounded-xl text-white placeholder-white/60 focus:outline-none">
+                        <button id="searchBtn" 
+                                class="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-semibold hover:shadow-lg transition">
+                            <span id="btnText">Analyze Number</span>
+                            <span id="btnLoading" class="hidden">
+                                <i class="fas fa-spinner fa-spin"></i> Analyzing...
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Container -->
+            <div id="results" class="max-w-3xl mx-auto hidden"></div>
+        </div>
+    </main>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed bottom-4 right-4 z-50"></div>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>
