@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TorNumber | বাংলাদেশি নম্বর ইন্টেলিজেন্স</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body {
+            background: linear-gradient(135deg, #0f0c29 0%, #1a1a3e 50%, #24243e 100%);
+            min-height: 100vh;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+        }
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 20px -5px rgba(139, 92, 246, 0.3);
+        }
+        .risk-badge {
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .risk-safe { background: #10b98120; color: #10b981; border: 1px solid #10b98140; }
+        .risk-suspicious { background: #f59e0b20; color: #f59e0b; border: 1px solid #f59e0b40; }
+        .risk-spam { background: #ef444420; color: #ef4444; border: 1px solid #ef444440; }
+        .risk-high-risk { background: #7c3aed20; color: #a78bfa; border: 1px solid #7c3aed40; }
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade {
+            animation: fadeIn 0.4s ease-out;
+        }
+        .flag-bd {
+            background: linear-gradient(135deg, #006a4e 0%, #f42a41 100%);
+        }
+    </style>
+</head>
+<body class="text-gray-100">
+    <nav class="fixed w-full z-50 bg-black/40 backdrop-blur-md border-b border-white/5">
+        <div class="max-w-4xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-9 h-9 rounded-lg flag-bd flex items-center justify-center">
+                        <span class="text-white font-bold text-lg">T</span>
+                    </div>
+                    <span class="text-xl font-semibold text-white">TorNumber</span>
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-300">Bangladesh Only</span>
+                </div>
+                <div class="text-sm text-gray-400">
+                    <i class="fas fa-map-marker-alt mr-1 text-green-400"></i> Bangladesh
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-24 pb-12">
+        <div class="max-w-3xl mx-auto px-6">
+            <div class="text-center mb-10">
+                <h1 class="text-4xl md:text-5xl font-bold mb-3">
+                    বাংলাদেশি নম্বর 
+                    <span class="bg-gradient-to-r from-green-400 to-red-400 bg-clip-text text-transparent">ইন্টেলিজেন্স</span>
+                </h1>
+                <p class="text-gray-400 text-base max-w-xl mx-auto">
+                    রিয়েল টাইম ক্যারিয়ার ডিটেকশন, লোকেশন ট্র্যাকিং ও স্প্যাম অ্যানালাইসিস
+                </p>
+            </div>
+
+            <div class="glass-card p-1.5 mb-6">
+                <div class="flex flex-col md:flex-row gap-2">
+                    <div class="flex-1 relative">
+                        <i class="fas fa-phone-alt absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm"></i>
+                        <input type="tel" 
+                               id="phoneInput"
+                               placeholder="বাংলাদেশি নম্বর লিখুন (01712345678 বা +8801712345678)" 
+                               class="w-full pl-10 pr-4 py-3.5 bg-transparent border-0 focus:outline-none text-white placeholder-gray-500 text-sm">
+                    </div>
+                    <button id="searchBtn" class="btn-primary px-6 py-3.5 rounded-xl font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed text-sm">
+                        <span id="btnText">অ্যানালাইসিস করুন</span>
+                        <span id="btnLoading" class="hidden">
+                            <i class="fas fa-circle-notch fa-spin mr-1"></i> অ্যানালাইসিস...
+                        </span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="text-center mb-8">
+                <p class="text-gray-500 text-xs">
+                    <i class="fas fa-info-circle mr-1"></i> 
+                    শুধুমাত্র বাংলাদেশি নম্বর সাপোর্ট করে (017, 018, 019, 013, 014, 015, 016)
+                </p>
+            </div>
+
+            <div id="resultsContainer" class="hidden animate-fade"></div>
+        </div>
+    </main>
+
+    <div id="toastContainer" class="fixed bottom-4 right-4 z-50"></div>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>
