@@ -1,14 +1,20 @@
 const phoneService = require('../services/phoneService');
 const aiSimulationService = require('../services/aiSimulationService');
-const cacheService = require('../services/cacheService');
-const externalApiService = require('../services/externalApiService');
-const Search = require('../../database/models/Search');
+
+// Try to load database models (optional)
+let Search = null;
+let SpamReport = null;
+try {
+  Search = require('../../database/models/Search');
+  SpamReport = require('../../database/models/SpamReport');
+} catch (error) {
+  console.log('⚠️ Database models not available, running without persistent storage');
+}
 
 class NumberController {
   async lookupNumber(req, res) {
     try {
       const { phoneNumber } = req.body;
-      const clientIp = req.ip || req.connection.remoteAddress;
       
       if (!phoneNumber) {
         return res.status(400).json({
@@ -17,8 +23,11 @@ class NumberController {
         });
       }
       
-      // Validate with auto-country detection (WITHOUT requiring +88)
-      const validation = await phoneService.validateAndParse(phoneNumber, clientIp);
+      console.log(`🔍 Looking up number: ${phoneNumber}`);
+      
+      // Validate with auto-country detection
+      const validation = await phoneService.validateAndParse(phoneNumber);
+      
       if (!validation.isValid) {
         return res.status(400).json({
           success: false,
@@ -26,42 +35,10 @@ class NumberController {
         });
       }
       
-      const normalizedNumber = validation.formattedInternational;
-      
-      // Check cache
-      const cacheKey = cacheService.generateKey('number', { number: normalizedNumber });
-      let cachedData = cacheService.get(cacheKey);
-      
-      if (cachedData) {
-        return res.json({
-          success: true,
-          data: cachedData,
-          cached: true
-        });
-      }
-      
-      // Try external API for real data
-      let externalData = null;
-      if (process.env.NUMVERIFY_API_KEY) {
-        externalData = await externalApiService.lookupWithNumverify(
-          phoneNumber, 
-          validation.country
-        );
-      }
-      
-      // Check database for existing data
-      let existingData = await Search.findOne({ normalizedNumber });
-      
-      // Enhance validation with external data if available
-      if (externalData) {
-        validation.carrier = externalData.carrier || validation.carrier;
-        if (externalData.location) {
-          validation.location = { city: externalData.location, source: 'numverify' };
-        }
-      }
+      console.log(`✅ Validated: ${validation.formattedInternational} (${validation.country})`);
       
       // Generate AI intelligence
-      const aiData = await aiSimulationService.generateIntelligence(validation, existingData);
+      const aiData = await aiSimulationService.generateIntelligence(validation);
       
       // Prepare response data
       const responseData = {
@@ -84,56 +61,52 @@ class NumberController {
         platforms: validation.platforms,
         areaCode: validation.areaCode,
         numberLength: validation.numberLength,
-        analysisMetrics: aiData.analysisMetrics,
-        spamReports: existingData?.spamReports || 0,
-        searchCount: (existingData?.searchCount || 0) + 1,
+        spamReports: 0,
+        searchCount: 1,
         lastSearched: new Date()
       };
       
-      // Store in database
-      if (existingData) {
-        existingData.searchCount += 1;
-        existingData.lastSearched = new Date();
-        existingData.spamScore = aiData.spamScore;
-        existingData.riskLevel = aiData.riskLevel;
-        existingData.aiInsight = aiData.aiInsight;
-        existingData.location = validation.location;
-        existingData.carrier = validation.carrier;
-        await existingData.save();
-      } else {
-        const searchRecord = new Search({
-          phoneNumber: validation.number,
-          normalizedNumber,
-          country: validation.country,
-          countryName: validation.countryName,
-          countryCode: validation.countryCode,
-          carrier: validation.carrier,
-          lineType: validation.lineType,
-          location: validation.location,
-          fakeName: aiData.fakeName,
-          spamScore: aiData.spamScore,
-          riskLevel: aiData.riskLevel,
-          aiInsight: aiData.aiInsight,
-          spamReports: 0
-        });
-        await searchRecord.save();
+      // Try to save to database if available
+      if (Search) {
+        try {
+          let existingData = await Search.findOne({ normalizedNumber: validation.formattedInternational });
+          if (existingData) {
+            existingData.searchCount += 1;
+            existingData.lastSearched = new Date();
+            await existingData.save();
+            responseData.spamReports = existingData.spamReports;
+            responseData.searchCount = existingData.searchCount;
+          } else {
+            const searchRecord = new Search({
+              phoneNumber: validation.number,
+              normalizedNumber: validation.formattedInternational,
+              country: validation.country,
+              countryName: validation.countryName,
+              carrier: validation.carrier,
+              lineType: validation.lineType,
+              fakeName: aiData.fakeName,
+              spamScore: aiData.spamScore,
+              riskLevel: aiData.riskLevel,
+              aiInsight: aiData.aiInsight
+            });
+            await searchRecord.save();
+          }
+        } catch (dbError) {
+          console.log('⚠️ Could not save to database:', dbError.message);
+        }
       }
-      
-      // Cache the response
-      cacheService.set(cacheKey, responseData);
       
       res.json({
         success: true,
         data: responseData,
-        cached: false,
-        source: externalData ? 'real-api' : 'simulated'
+        cached: false
       });
       
     } catch (error) {
       console.error('Lookup error:', error);
       res.status(500).json({
         success: false,
-        error: 'Internal server error'
+        error: 'Internal server error: ' + error.message
       });
     }
   }
@@ -141,7 +114,6 @@ class NumberController {
   async reportSpam(req, res) {
     try {
       const { phoneNumber, reason } = req.body;
-      const ipAddress = req.ip;
       
       const validation = await phoneService.validateAndParse(phoneNumber);
       if (!validation.isValid) {
@@ -151,31 +123,21 @@ class NumberController {
         });
       }
       
-      const normalizedNumber = validation.formattedInternational;
-      const SpamReport = require('../../database/models/SpamReport');
-      
-      const report = new SpamReport({
-        phoneNumber: validation.number,
-        normalizedNumber,
-        reportedBy: 'anonymous',
-        reason: reason || 'Spam',
-        ipAddress
-      });
-      
-      await report.save();
-      
-      // Update search record
-      const Search = require('../../database/models/Search');
-      const searchRecord = await Search.findOne({ normalizedNumber });
-      if (searchRecord) {
-        const reportCount = await SpamReport.countDocuments({ normalizedNumber });
-        searchRecord.spamReports = reportCount;
-        await searchRecord.save();
+      // Save spam report if database is available
+      if (SpamReport) {
+        try {
+          const report = new SpamReport({
+            phoneNumber: validation.number,
+            normalizedNumber: validation.formattedInternational,
+            reportedBy: 'anonymous',
+            reason: reason || 'Spam',
+            ipAddress: req.ip
+          });
+          await report.save();
+        } catch (dbError) {
+          console.log('⚠️ Could not save spam report:', dbError.message);
+        }
       }
-      
-      // Invalidate cache
-      const cacheKey = cacheService.generateKey('number', { number: normalizedNumber });
-      cacheService.del(cacheKey);
       
       res.json({
         success: true,
